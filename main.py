@@ -1,105 +1,107 @@
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
-from selenium.webdriver.support.wait import WebDriverWait
+URL = "YOUR_LINKEDIN_JOB_LINK"
+YOUR_EMAIL = "YOUR_EMAIL"
+YOUR_PASSWORD = "YOUR_PASSWORD"
+CHROME_DRIVER_LOCATION = "YOUR_CHROME_DRIVER_LOCATION"
 
-URL = LINKED IN JOB LINK (MUST BE EASY APPLY)
-YOUR_EMAIL = YOUR_EMAIL
-YOUR_PASSWORD = YOUR_PASSWORD
-CHROME_DRIVER_LOCATION = YOUR CHROME DRIVER LOCATION
-
-
-def abort_application():
-    # Click Close Button
-    close_button = driver.find_element(By.CLASS_NAME, value="artdeco-modal__dismiss")
-    close_button.click()
-
-    time.sleep(2)
-    # Click Discard Button
-    discard_button = driver.find_elements(By.CLASS_NAME, value="artdeco-modal__confirm-dialog-btn")[0]
-    discard_button.click()
-
+def abort_application(driver):
+    try:
+        # Click Close Button
+        close_button = driver.find_element(By.CLASS_NAME, "artdeco-modal__dismiss")
+        close_button.click()
+        time.sleep(2)
+        # Click Discard Button
+        discard_button = driver.find_element(By.CLASS_NAME, "artdeco-modal__confirm-dialog-btn")
+        discard_button.click()
+    except NoSuchElementException:
+        pass
 
 # Optional - Keep the browser open (helps diagnose issues if the script crashes)
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_experimental_option("detach", True)
 
 driver = webdriver.Chrome(CHROME_DRIVER_LOCATION, options=chrome_options)
+wait = WebDriverWait(driver, 10)
 
 driver.get(URL)
 
 # Click Sign in Button
-time.sleep(2)
-sign_in_button = driver.find_element(By.XPATH, value='/html/body/div[1]/header/nav/div/a[2]')
-sign_in_button.click()
+try:
+    sign_in_button = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/header/nav/div/a[2]')))
+    sign_in_button.click()
+except TimeoutException:
+    print("Sign-in button not found")
+    driver.quit()
+    exit()
 
 # Sign in
-time.sleep(3)
-email_field = driver.find_element(By.ID, value="username")
-email_field.send_keys(YOUR_EMAIL)
-password_field = driver.find_element(By.ID, value="password")
-password_field.send_keys(YOUR_PASSWORD)
-password_field.send_keys(Keys.ENTER)
-
+try:
+    email_field = wait.until(EC.presence_of_element_located((By.ID, "username")))
+    email_field.send_keys(YOUR_EMAIL)
+    password_field = driver.find_element(By.ID, "password")
+    password_field.send_keys(YOUR_PASSWORD)
+    password_field.send_keys(Keys.ENTER)
+except TimeoutException:
+    print("Sign-in form not found")
+    driver.quit()
+    exit()
 
 # CAPTCHA - Solve Puzzle Manually
 input("Press Enter when you have solved the Captcha")
 
 # Get Listings
-time.sleep(3)
-all_listings = driver.find_elements(By.CSS_SELECTOR, value=".job-card-container--clickable")
+try:
+    all_listings = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".job-card-container--clickable")))
+except TimeoutException:
+    print("No job listings found")
+    driver.quit()
+    exit()
 
 # Apply for Jobs
 for listing in all_listings:
     print("Opening Listing")
     listing.click()
-    time.sleep(5)
+    time.sleep(3)
     try:
         # Click Apply Button
-        apply_button = driver.find_element(By.CSS_SELECTOR, value=".jobs-s-apply button")
+        apply_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".jobs-s-apply button")))
         apply_button.click()
         time.sleep(2)
-        # Press Next Button
-        next_buttonish = driver.find_element(By.CLASS_NAME, value="artdeco-button artdeco-button--2 artdeco-button--primary ember-view")
 
-        next_button = next_buttonish.find_element(By.LINK_TEXT, value='Next')
-        next_button.click()
-        time.sleep(1)
-        second_next_button = driver.find_element(By.CLASS_NAME, value='artdeco-button artdeco-button--2 artdeco-button--primary ember-view')
-        second_next_button.click()
-        time.sleep(1)
-        review_button = driver.find_element(By.CLASS_NAME, value='artdeco-button artdeco-button--2 artdeco-button--primary ember-view')
-        review_button.click()
-        time.sleep(1)
-        # Check the Submit Button
-        submit_button = driver.find_element(By.CLASS_NAME, value='artdeco-button__text')
-        if submit_button.text != "Submit application":
-            abort_application()
-            print("Complex application, skipped.")
-            continue
-        else:
-            # Click Submit Button
-            print("Submitting job application")
-            submit_button.click()
+        while True:
+            try:
+                # Click Next or Submit button
+                next_or_submit_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label*='Next'], button[aria-label*='Submit application']")))
+                button_label = next_or_submit_button.get_attribute("aria-label")
+
+                if "Submit application" in button_label:
+                    print("Submitting job application")
+                    next_or_submit_button.click()
+                    break
+                else:
+                    next_or_submit_button.click()
+                    time.sleep(2)
+            except (TimeoutException, ElementClickInterceptedException) as e:
+                print(f"Exception occurred: {str(e)}")
+                abort_application(driver)
+                break
 
         time.sleep(2)
         # Click Close Button
-        close_button = driver.find_element(By.CLASS_NAME, value="artdeco-modal__icon")
+        close_button = driver.find_element(By.CLASS_NAME, "artdeco-modal__dismiss")
         close_button.click()
 
-    except NoSuchElementException:
-        abort_application()
+    except (NoSuchElementException, TimeoutException):
+        abort_application(driver)
         print("No application button, skipped.")
         continue
 
 time.sleep(5)
 driver.quit()
-
-
-
-# #ember362 //*[@id="ember362"]
-# class="artdeco-button artdeco-button--2 artdeco-button--primary ember-view" text = next
