@@ -78,16 +78,19 @@ for listing in all_listings:
         while True:
             try:
                 # Click Next or Submit button
-                next_or_submit_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label*='Next'], button[aria-label*='Submit application']")))
-                button_label = next_or_submit_button.get_attribute("aria-label")
+                next_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label*='Next']")))
+                next_button.click()
+                time.sleep(2)
 
-                if "Submit application" in button_label:
-                    print("Submitting job application")
-                    next_or_submit_button.click()
-                    break
-                else:
-                    next_or_submit_button.click()
-                    time.sleep(2)
+                review_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label*='Review']")))
+                review_button.click()
+                time.sleep(2)
+
+                submit_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label*='Submit application']")))
+                print("Submitting job application")
+                submit_button.click()
+                break
+
             except (TimeoutException, ElementClickInterceptedException) as e:
                 print(f"Exception occurred: {str(e)}")
                 abort_application(driver)
