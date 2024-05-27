@@ -11,18 +11,23 @@ YOUR_EMAIL = "YOUR_EMAIL"
 YOUR_PASSWORD = "YOUR_PASSWORD"
 CHROME_DRIVER_LOCATION = "YOUR_CHROME_DRIVER_LOCATION"
 
-
 def abort_application(driver):
     try:
         # Click Close Button
-        close_button = driver.find_element(By.CLASS_NAME, "artdeco-modal__dismiss")
+        close_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CLASS_NAME, "artdeco-modal__dismiss"))
+        )
         close_button.click()
         time.sleep(2)
         # Click Discard Button
-        discard_button = driver.find_element(By.CLASS_NAME, "artdeco-modal__confirm-dialog-btn")
+        discard_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CLASS_NAME, "artdeco-modal__confirm-dialog-btn"))
+        )
         discard_button.click()
     except NoSuchElementException:
-        pass
+        print("Could not find modal dismiss or discard button.")
+    except TimeoutException:
+        print("Timeout while waiting for modal dismiss or discard button.")
 
 # Optional - Keep the browser open (helps diagnose issues if the script crashes)
 chrome_options = webdriver.ChromeOptions()
@@ -98,9 +103,12 @@ for listing in all_listings:
                 break
 
         time.sleep(2)
-        # Click Close Button
-        close_button = driver.find_element(By.CLASS_NAME, "artdeco-modal__dismiss")
-        close_button.click()
+        # Ensure modal is closed before moving on
+        try:
+            close_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "artdeco-modal__dismiss")))
+            close_button.click()
+        except (TimeoutException, NoSuchElementException):
+            print("Close button not found after submitting application.")
 
     except (NoSuchElementException, TimeoutException, ElementClickInterceptedException) as e:
         print(f"Exception occurred: {str(e)}")
