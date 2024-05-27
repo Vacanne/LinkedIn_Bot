@@ -11,6 +11,7 @@ YOUR_EMAIL = "YOUR_EMAIL"
 YOUR_PASSWORD = "YOUR_PASSWORD"
 CHROME_DRIVER_LOCATION = "YOUR_CHROME_DRIVER_LOCATION"
 
+
 def abort_application(driver):
     try:
         # Click Close Button
@@ -78,20 +79,20 @@ for listing in all_listings:
         while True:
             try:
                 # Click Next or Submit button
-                next_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label*='Next']")))
+                next_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'Next')]")))
                 next_button.click()
                 time.sleep(2)
 
-                review_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label*='Review']")))
+                review_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'Review')]")))
                 review_button.click()
                 time.sleep(2)
 
-                submit_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label*='Submit application']")))
+                submit_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'Submit application')]")))
                 print("Submitting job application")
                 submit_button.click()
                 break
 
-            except (TimeoutException, ElementClickInterceptedException) as e:
+            except (TimeoutException, ElementClickInterceptedException, NoSuchElementException) as e:
                 print(f"Exception occurred: {str(e)}")
                 abort_application(driver)
                 break
@@ -101,7 +102,8 @@ for listing in all_listings:
         close_button = driver.find_element(By.CLASS_NAME, "artdeco-modal__dismiss")
         close_button.click()
 
-    except (NoSuchElementException, TimeoutException):
+    except (NoSuchElementException, TimeoutException, ElementClickInterceptedException) as e:
+        print(f"Exception occurred: {str(e)}")
         abort_application(driver)
         print("No application button, skipped.")
         continue
