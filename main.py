@@ -24,10 +24,8 @@ def abort_application(driver):
             EC.element_to_be_clickable((By.CLASS_NAME, "artdeco-modal__confirm-dialog-btn"))
         )
         discard_button.click()
-    except NoSuchElementException:
+    except (NoSuchElementException, TimeoutException):
         print("Could not find modal dismiss or discard button.")
-    except TimeoutException:
-        print("Timeout while waiting for modal dismiss or discard button.")
 
 # Optional - Keep the browser open (helps diagnose issues if the script crashes)
 chrome_options = webdriver.ChromeOptions()
@@ -71,11 +69,14 @@ except TimeoutException:
     exit()
 
 # Apply for Jobs
-for listing in all_listings:
+for index in range(len(all_listings)):
     print("Opening Listing")
-    listing.click()
-    time.sleep(3)
     try:
+        all_listings = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".job-card-container--clickable")))
+        listing = all_listings[index]
+        listing.click()
+        time.sleep(3)
+
         # Click Apply Button
         apply_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".jobs-s-apply button")))
         apply_button.click()
@@ -110,7 +111,7 @@ for listing in all_listings:
         except (TimeoutException, NoSuchElementException):
             print("Close button not found after submitting application.")
 
-    except (NoSuchElementException, TimeoutException, ElementClickInterceptedException) as e:
+    except (NoSuchElementException, TimeoutException, ElementClickInterceptedException, StaleElementReferenceException) as e:
         print(f"Exception occurred: {str(e)}")
         abort_application(driver)
         print("No application button, skipped.")
