@@ -13,13 +13,12 @@ CHROME_DRIVER_LOCATION = "YOUR_CHROME_DRIVER_LOCATION"
 
 def abort_application(driver):
     try:
-        # Click Close Button
+        print("Aborting application")
         close_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.CLASS_NAME, "artdeco-modal__dismiss"))
         )
         close_button.click()
         time.sleep(2)
-        # Click Discard Button
         discard_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.CLASS_NAME, "artdeco-modal__confirm-dialog-btn"))
         )
@@ -38,7 +37,7 @@ driver.get(URL)
 
 # Click Sign in Button
 try:
-    sign_in_button = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/header/nav/div/a[2]')))
+    sign_in_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//a[@href="/login"]')))
     sign_in_button.click()
 except TimeoutException:
     print("Sign-in button not found")
@@ -84,18 +83,32 @@ for index in range(len(all_listings)):
 
         while True:
             try:
-                # Click Next or Submit button
-                next_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'Next')]")))
-                next_button.click()
-                time.sleep(2)
+                # Click Next button
+                next_buttons = driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'Next')]")
+                if next_buttons:
+                    next_buttons[0].click()
+                    print("Clicked Next button")
+                    time.sleep(2)
+                    continue
 
-                review_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'Review')]")))
-                review_button.click()
-                time.sleep(2)
+                # Click Review button
+                review_buttons = driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'Review')]")
+                if review_buttons:
+                    review_buttons[0].click()
+                    print("Clicked Review button")
+                    time.sleep(2)
+                    continue
 
-                submit_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'Submit application')]")))
-                print("Submitting job application")
-                submit_button.click()
+                # Click Submit application button
+                submit_buttons = driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'Submit application')]")
+                if submit_buttons:
+                    submit_buttons[0].click()
+                    print("Submitting job application")
+                    time.sleep(2)
+                    break
+
+                print("No Next, Review, or Submit button found, skipping this application")
+                abort_application(driver)
                 break
 
             except (TimeoutException, ElementClickInterceptedException, NoSuchElementException) as e:
@@ -103,7 +116,6 @@ for index in range(len(all_listings)):
                 abort_application(driver)
                 break
 
-        time.sleep(2)
         # Ensure modal is closed before moving on
         try:
             close_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "artdeco-modal__dismiss")))
