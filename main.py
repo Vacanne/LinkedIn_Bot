@@ -31,7 +31,7 @@ chrome_options = webdriver.ChromeOptions()
 chrome_options.add_experimental_option("detach", True)
 
 driver = webdriver.Chrome(CHROME_DRIVER_LOCATION, options=chrome_options)
-wait = WebDriverWait(driver, 10)
+wait = WebDriverWait(driver, 15)  # Increased wait time
 
 driver.get(URL)
 
@@ -71,11 +71,12 @@ except TimeoutException:
 for index in range(len(all_listings)):
     print("Opening Listing")
     try:
+        # Refetch listings to avoid stale elements
         all_listings = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".job-card-container--clickable")))
         listing = all_listings[index]
         listing.click()
         time.sleep(3)
-
+        
         # Click Apply Button
         apply_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".jobs-s-apply button")))
         apply_button.click()
@@ -84,16 +85,18 @@ for index in range(len(all_listings)):
         while True:
             try:
                 # Click Next button
-                next_buttons = driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'Next')]")
+                next_buttons = driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'Next') or contains(@aria-label, 'Continue')]")
                 if next_buttons:
+                    print("Next button found")
                     next_buttons[0].click()
                     print("Clicked Next button")
                     time.sleep(2)
                     continue
-
+                
                 # Click Review button
                 review_buttons = driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'Review')]")
                 if review_buttons:
+                    print("Review button found")
                     review_buttons[0].click()
                     print("Clicked Review button")
                     time.sleep(2)
@@ -102,11 +105,12 @@ for index in range(len(all_listings)):
                 # Click Submit application button
                 submit_buttons = driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'Submit application')]")
                 if submit_buttons:
+                    print("Submit application button found")
                     submit_buttons[0].click()
                     print("Submitting job application")
                     time.sleep(2)
                     break
-
+                
                 print("No Next, Review, or Submit button found, skipping this application")
                 abort_application(driver)
                 break
