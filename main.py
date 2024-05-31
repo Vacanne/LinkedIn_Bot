@@ -11,6 +11,7 @@ YOUR_EMAIL = "YOUR_EMAIL"
 YOUR_PASSWORD = "YOUR_PASSWORD"
 CHROME_DRIVER_LOCATION = "YOUR_CHROME_DRIVER_LOCATION"
 
+
 def abort_application(driver):
     try:
         print("Aborting application")
@@ -26,6 +27,7 @@ def abort_application(driver):
     except (NoSuchElementException, TimeoutException):
         print("Could not find modal dismiss or discard button.")
 
+
 # Optional - Keep the browser open (helps diagnose issues if the script crashes)
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_experimental_option("detach", True)
@@ -37,7 +39,7 @@ driver.get(URL)
 
 # Click Sign in Button
 try:
-    sign_in_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//a[@href="/login"]')))
+    sign_in_button = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/header/nav/div/a[2]')))
     sign_in_button.click()
 except TimeoutException:
     print("Sign-in button not found")
@@ -72,11 +74,12 @@ for index in range(len(all_listings)):
     print("Opening Listing")
     try:
         # Refetch listings to avoid stale elements
-        all_listings = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".job-card-container--clickable")))
+        all_listings = wait.until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".job-card-container--clickable")))
         listing = all_listings[index]
         listing.click()
         time.sleep(3)
-        
+
         # Click Apply Button
         apply_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".jobs-s-apply button")))
         apply_button.click()
@@ -85,14 +88,15 @@ for index in range(len(all_listings)):
         while True:
             try:
                 # Click Next button
-                next_buttons = driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'Next') or contains(@aria-label, 'Continue')]")
+                next_buttons = driver.find_elements(By.XPATH,
+                                                    "//button[contains(@aria-label, 'Next') or contains(@aria-label, 'Continue')]")
                 if next_buttons:
                     print("Next button found")
                     next_buttons[0].click()
                     print("Clicked Next button")
                     time.sleep(2)
                     continue
-                
+
                 # Click Review button
                 review_buttons = driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'Review')]")
                 if review_buttons:
@@ -110,7 +114,7 @@ for index in range(len(all_listings)):
                     print("Submitting job application")
                     time.sleep(2)
                     break
-                
+
                 print("No Next, Review, or Submit button found, skipping this application")
                 abort_application(driver)
                 break
@@ -127,7 +131,8 @@ for index in range(len(all_listings)):
         except (TimeoutException, NoSuchElementException):
             print("Close button not found after submitting application.")
 
-    except (NoSuchElementException, TimeoutException, ElementClickInterceptedException, StaleElementReferenceException) as e:
+    except (
+    NoSuchElementException, TimeoutException, ElementClickInterceptedException, StaleElementReferenceException) as e:
         print(f"Exception occurred: {str(e)}")
         abort_application(driver)
         print("No application button, skipped.")
